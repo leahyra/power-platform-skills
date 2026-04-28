@@ -662,6 +662,12 @@ function get() {
 - The server logic can add additional validation, transformation, or logging around the custom action call — it doesn't have to be a pass-through
 - When Custom API response properties are known (from Phase 2.1.2), map them to the response object for clarity
 
+#### Dataverse Response Shape (Critical for Frontend Integration)
+
+When a function returns the result of a `Server.Connector.Dataverse.*` method, the client sees a double-wrapped payload — the most common cause of broken frontend integrations. Before writing the function, pick one of three response shapes and record the choice for Phase 9: **Approach A — raw passthrough** (return the connector result as-is), **Approach B — envelope that wraps the connector result** (return `{ status, data: result }` without unwrapping `Body`), or **Approach C — fully normalized** (parse `Body` server-side and return a feature-specific shape — recommended for non-generic endpoints).
+
+See `${CLAUDE_PLUGIN_ROOT}/skills/add-server-logic/references/frontend-integration-reference.md` → "Dataverse Connector Response Format" for the double-wrapping explanation, the `CreateRecord` / `entityid` header behavior, and server- and client-side examples for each shape.
+
 #### Referencing Secrets in Code
 
 When the server logic needs a secret value identified in Phase 2.3, **never hardcode the value**. Instead, read it at runtime from a site setting backed by an environment variable:
@@ -1043,6 +1049,8 @@ Following the reference:
 - Replace placeholder data, mock handlers, or temporary actions when they are meant to be backed by the new server logic endpoints
 - Add or preserve loading, success, empty, and error states so the UI behaves like a finished feature
 - **For validate-and-execute endpoints**: The frontend must call the server logic endpoint for the protected operation (e.g., status transition) — it must NOT make a separate Web API PATCH for the same field. Ensure the UI for that operation (e.g., a "Submit" or "Approve" button) calls the server logic service function, not the Web API service
+- **For Dataverse-backed endpoints**: Match the frontend parsing to the response shape chosen in Phase 5.3. See "Dataverse Connector Response Format" in the frontend integration reference for the exact parsing per shape.
+- **If the response shape is unclear**: Do not guess. After the site is deployed, invoke `/test-site` against the live site so the actual server logic response can be captured from the network tab and used to drive the integration
 
 ### 9.4 Git Commit
 
